@@ -12,7 +12,12 @@ module tick(
     tick is high while the counter is 99, and low otherwise.
     */
     //Do not modify above this line
+    reg[6:0] count = 7'd0;  // initialize count
 
+    always @(posedge clk) begin
+        if(count == 7'd99) count <= 7'd0;   //reset count after it reaches 99
+        else count <= count + 7'd1;     //increment count
+    end
 
-
+    assign tick = (count == 7'd99);     //tick is high at count == 99
 endmodule

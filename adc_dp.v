@@ -22,7 +22,20 @@ module adc_dp(
     max is high whenever dac is 31, its largest value.
     */
     //Do not modify above this line
+    initial begin   // initialize registers at start
+        dac = 5'b0;
+        result = 4'b0;
+    end
+    
+    always @(posedge clk) begin
+        if(clr)
+            dac <= 5'b0;
+        else if(inc)
+            dac <= dac + 5'b1;
+        
+        if(load)
+            result <= dac[4:1];
+    end
 
-
-
+    assign max = (dac == 5'b11111);
 endmodule

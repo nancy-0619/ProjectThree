@@ -21,7 +21,12 @@ module led_bar(
         15   10000000
     */
     //Do not modify above this line
-
-
-
+    always @* begin
+        if(in == 4'd0)
+            led = 8'd0;
+        else if (in % 2 == 1)   // When odd, in/2 gets number of shifts
+            led = 8'd1 << (in / 2);
+        else                    // When even, make in odd then divide by 2 to do the same thing
+            led = 8'd3 << ((in - 1) / 2);
+    end
 endmodule

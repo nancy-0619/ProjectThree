@@ -22,7 +22,11 @@ module memory(
         reg [3:0] mem [0:255];
     */
     //Do not modify above this line
+    reg [3:0] mem [0:255];  // 256 x 4 bits
 
-
-
+    always @(posedge clk) begin
+        if(we)
+        mem[waddr] <= wdata;
+        rdata <= mem[raddr];
+    end
 endmodule

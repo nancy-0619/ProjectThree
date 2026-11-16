@@ -28,7 +28,51 @@ module adc_ctrl(
     around to 0 if the input is higher than the DAC can go.
     */
     //Do not modify above this line
+    localparam IDLE = 2'd0;
+    localparam SETTLE = 2'd1;
+    localparam INC = 2'd2;
+    localparam DONE = 2'd3;
 
+    reg[1:0] state;
+    reg[1:0] next_state;
 
+    initial begin
+        state = IDLE;
+    end
+    always @(posedge clk) begin
+        state <= next_state;
+    end
 
+    always @* begin
+        case(state)
+                IDLE: begin
+                        if(start)
+                                next_state = SETTLE;
+                        else
+                                next_state = IDLE;
+                end
+                SETTLE: begin
+                        if(comp || max)
+                                next_state = DONE;
+                        else
+                                next_state = INC;
+                end
+                INC: begin
+                        next_state = SETTLE;
+                end
+                DONE: begin
+                        next_state = IDLE;
+                end
+                default: begin
+                        next_state = IDLE;
+                end
+        endcase
+    end
+
+    // Output Logic - make output 1 based on current state
+    always @* begin
+        inc = (state == INC);
+        clr = (state == DONE);
+        load = (state == DONE);
+    end
 endmodule

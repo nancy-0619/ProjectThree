@@ -46,7 +46,112 @@ module recorder(
          instead. This loops over the recording.
     */
     //Do not modify above this line
+    reg [7:0] waddr;
+    reg [7:0] raddr;
+    reg full;
+    reg [7:0] last [0:3];   // last address recorded for each memory bank
 
+    wire [3:0] rdata0, rdata1, rdata2, rdata3;
+    wire we0, we1, we2, we3;
 
+    // Recording takes priority over playback
+    assign recording = rec && !full;
+    assign playing = play && !rec;
 
+    // Make the selected bank's write enable high
+    assign we0 = recording && tick && (bank == 2'd0);
+    assign we1 = recording && tick && (bank == 2'd1);
+    assign we2 = recording && tick && (bank == 2'd2);
+    assign we3 = recording && tick && (bank == 2'd3);
+
+    // Initialize registers
+    integer i;
+    initial begin
+        waddr = 8'b0;
+        raddr = 8'b0;
+        full = 1'b0;
+        for (i = 0; i < 4; i = i + 1) begin
+            last[i] = 8'b0;
+        end
+    end
+
+    // Instantiate memory banks
+    memory mem0 (
+        .clk(clk),
+        .we(we0),
+        .waddr(waddr),
+        .wdata(sample),
+        .raddr(raddr),
+        .rdata(rdata0)
+    );
+
+    memory mem1 (
+        .clk(clk),
+        .we(we1),
+        .waddr(waddr),
+        .wdata(sample),
+        .raddr(raddr),
+        .rdata(rdata1)
+    );
+
+    memory mem2 (
+        .clk(clk),
+        .we(we2),
+        .waddr(waddr),
+        .wdata(sample),
+        .raddr(raddr),
+        .rdata(rdata2)
+    );
+
+    memory mem3 (
+        .clk(clk),
+        .we(we3),
+        .waddr(waddr),
+        .wdata(sample),
+        .raddr(raddr),
+        .rdata(rdata3)
+    );
+
+    // Select active memory bank to set it's rdata as the output
+    always @* begin
+        case(bank)
+            2'd0: out = rdata0;
+            2'd1: out = rdata1;
+            2'd2: out = rdata2;
+            2'd3: out = rdata3;
+            default: out = 4'b0;
+        endcase
+    end
+
+    //Recording
+    always @(posedge clk) begin
+        if(!rec) begin
+            waddr <= 8'd0;   // Reset recorder back to starting address
+            full <= 1'b0;    // Reset full flag
+        end
+        else if(recording && tick) begin
+            last[bank] <= waddr;    // Update last written address in the specific bank
+            if(waddr == 8'd255) begin   // Update flag once waddr reaches 255
+                full <= 1'b1;
+            end
+            else begin  // Increment waddr address by one
+                waddr <= waddr + 8'd1;
+            end
+        end
+    end
+
+    //Playback
+    always @(posedge clk) begin
+        if(!playing) begin
+            raddr <= 8'd0;
+        end
+        else if(tick) begin
+            if(raddr >= last[bank]) begin
+                raddr <= 8'd0;
+            end
+            else begin
+                raddr <= raddr + 8'd1;
+            end 
+        end
+    end
 endmodule

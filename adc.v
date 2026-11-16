@@ -17,7 +17,30 @@ module adc(
     comparator output goes high, and result is set to dac[4:1].
     */
     //Do not modify above this line
+    wire inc;
+    wire clr;
+    wire load;
+    wire max;
 
+    // Instantiate Control FSM
+    adc_ctrl ctrl1 (
+        .clk(clk),
+        .start(start),
+        .comp(comp),
+        .max(max),
+        .inc(inc),
+        .clr(clr),
+        .load(load)
+    );
 
-
+    // Instantiate Datapath
+    adc_dp dp1 (
+        .clk(clk),
+        .inc(inc),
+        .clr(clr),
+        .load(load),
+        .dac(dac),
+        .result(result),
+        .max(max)
+    );
 endmodule

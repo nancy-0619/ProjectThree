@@ -51,6 +51,80 @@ module main(
     sevseg_disp disp(sevseg_in, sevseg_dp, seven_seg);
     //Do not modify above this line
 
+     wire [4:0] adc_dac;
+    wire [3:0] adc_result;
+
+    wire rec_db;
+    wire play_db;
+    wire tick_sig;
+
+    wire recording;
+    wire playing;
+    wire [3:0] playback_out;
+
+    wire [3:0] display_value;
+
+    debounce db_rec (
+        .clk(clk),
+        .btn(btn[0]),
+        .btn_db(rec_db)
+    );
+
+      debounce db_play (
+        .clk(clk),
+        .btn(btn[1]),
+        .btn_db(play_db)
+    );
+
+
+      tick tick_gen (
+        .clk(clk),
+        .tick(tick_sig)
+    );
+
+     adc adc1 (
+        .clk(clk),
+        .start(tick_sig && !playing),
+        .comp(comp),
+        .dac(adc_dac),
+        .result(adc_result)
+    );
+
+     recorder rec1 (
+        .clk(clk),
+        .tick(tick_sig),
+        .rec(rec_db),
+        .play(play_db),
+        .bank(sw[1:0]),
+        .sample(adc_result),
+        .recording(recording),
+        .playing(playing),
+        .out(playback_out)
+    );
+
+     assign display_value = playing ? playback_out : adc_result;
+
+    led_bar led1 (
+        .in(display_value),
+        .led(led)
+    );
+
+
+     always @* begin
+        if (playing)
+            dac = {playback_out, 1'b0};
+        else
+            dac = adc_dac;
+    end
+
+
+ assign sevseg_in = {2'b00, sw[1:0]};
+
+
+ assign sevseg_dp = recording;
+    
+
+
 
 
 endmodule
